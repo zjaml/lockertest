@@ -5,6 +5,9 @@ import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
 import android.widget.TextView;
 
+import com.felhr.usbserial.UsbSerialDevice;
+import com.felhr.usbserial.UsbSerialInterface;
+
 
 public class MainActivity extends AppCompatActivity {
     TextView logText;
@@ -20,3 +23,5 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 }
+
+
