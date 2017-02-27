@@ -112,7 +112,7 @@ public class BluetoothClient implements BluetoothClientInterface {
         BluetoothDevice device = getTargetDevice();
         if (device == null) {
             //todo: report issue here.
-            Log.w(TAG, "not paired with target device" + mTargetDeviceName);
+            Log.w(TAG, "not paired with target device: " + mTargetDeviceName);
             return false;
         }
         if (getState() != STATE_CONNECTING) {

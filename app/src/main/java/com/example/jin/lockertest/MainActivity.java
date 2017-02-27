@@ -2,6 +2,7 @@ package com.example.jin.lockertest;
 
 import android.bluetooth.BluetoothDevice;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -14,7 +15,9 @@ import android.widget.TextView;
 
 
 public class MainActivity extends AppCompatActivity {
-    TextView doorNumberText, logText;
+    //Make sure the device name is correct!
+    public static final String TARGET_DEVICE_NAME = "Nexus 7";
+    TextView doorNumberText, logText, statusText;
     Button checkInButton, checkOutButton, doorButton, emptyButton, clearButton;
 
     private BluetoothClientInterface mBluetoothClient;
@@ -27,10 +30,10 @@ public class MainActivity extends AppCompatActivity {
                     if (mBluetoothClient != null) {
                         mBluetoothClient.connect();
                     }
-                    setUiEnabled(false);
+                    setUIConnected(false);
                     break;
                 case Constants.MESSAGE_CONNECTED:
-                    setUiEnabled(true);
+                    setUIConnected(true);
                     break;
                 case Constants.MESSAGE_INCOMING_MESSAGE:
                     String message = (String) msg.obj;
@@ -52,10 +55,11 @@ public class MainActivity extends AppCompatActivity {
         doorButton = (Button) findViewById(R.id.doorButton);
         emptyButton = (Button) findViewById(R.id.emptyButton);
         clearButton = (Button) findViewById(R.id.clearButton);
+        statusText = (TextView) findViewById(R.id.statusText);
 
-        setUiEnabled(false);
+        setUIConnected(false);
 
-        mBluetoothClient = new FakeBTClient(mHandler);
+        mBluetoothClient = new BluetoothClient(mHandler, TARGET_DEVICE_NAME);
     }
 
 
@@ -81,11 +85,13 @@ public class MainActivity extends AppCompatActivity {
         return mBluetoothClient != null && mBluetoothClient.getState() == BluetoothClientInterface.STATE_CONNECTED;
     }
 
-    public void setUiEnabled(boolean bool) {
-        checkInButton.setEnabled(bool);
-        checkOutButton.setEnabled(bool);
-        doorButton.setEnabled(bool);
-        emptyButton.setEnabled(bool);
+    public void setUIConnected(boolean connected) {
+        statusText.setText(connected?"Connected": "Disconnected");
+        statusText.setTextColor(connected? Color.rgb(72,145,116): Color.rgb(128,45,21));
+        checkInButton.setEnabled(connected);
+        checkOutButton.setEnabled(connected);
+        doorButton.setEnabled(connected);
+        emptyButton.setEnabled(connected);
     }
 
     private void tvAppend(TextView tv, CharSequence text) {

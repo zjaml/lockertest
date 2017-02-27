@@ -9,6 +9,14 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
+    <TextView
+        android:text="TextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/statusText"
+        android:textAppearance="@android:style/TextAppearance.Holo.Large"
+        android:textAlignment="center" />
+
     <EditText
         android:id="@+id/doorNumberText"
         android:layout_width="match_parent"

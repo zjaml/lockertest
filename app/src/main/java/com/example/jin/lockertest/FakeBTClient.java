@@ -64,7 +64,7 @@ public class FakeBTClient implements BluetoothClientInterface {
             @Override
             protected Void doInBackground(Void... voids) {
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(2000);
                     setState(STATE_CONNECTED);
                     // use following to simulate occasional disconnection.
                     //don't wait too long here as it jams the queue, preventing future AsyncTask from running.
