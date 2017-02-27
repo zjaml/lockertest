@@ -1,48 +1,49 @@
 package com.example.jin.lockertest;
 
-import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
+import android.bluetooth.BluetoothDevice;
 import android.content.IntentFilter;
-import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbDeviceConnection;
-import android.hardware.usb.UsbManager;
-import android.os.BatteryManager;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.support.v7.app.AppCompatActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.felhr.usbserial.UsbSerialDevice;
-import com.felhr.usbserial.UsbSerialInterface;
-
-import junit.runner.BaseTestRunner;
-
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.Map;
-
 
 public class MainActivity extends AppCompatActivity {
-    public final String ACTION_USB_PERMISSION = "com.example.jin.lockertest.USB_PERMISSION";
-    UsbManager usbManager;
-    UsbDeviceConnection connection;
-    UsbSerialDevice serialPort;
-    UsbDevice device;
-
     TextView doorNumberText, logText;
     Button checkInButton, checkOutButton, doorButton, emptyButton, clearButton;
+
+    private BluetoothClientInterface mBluetoothClient;
+    private final Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case Constants.MESSAGE_CONNECTION_LOST:
+                    // reconnect since connection is lost
+                    if (mBluetoothClient != null) {
+                        mBluetoothClient.connect();
+                    }
+                    setUiEnabled(false);
+                    break;
+                case Constants.MESSAGE_CONNECTED:
+                    setUiEnabled(true);
+                    break;
+                case Constants.MESSAGE_INCOMING_MESSAGE:
+                    String message = (String) msg.obj;
+                    tvAppend(logText, String.format("Message received: %s",  message.concat("\n")));
+                    break;
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        usbManager = (UsbManager) getSystemService(this.USB_SERVICE);
         doorNumberText = (TextView) findViewById(R.id.doorNumberText);
         logText = (TextView) findViewById(R.id.logText);
         logText.setMovementMethod(new ScrollingMovementMethod());
@@ -53,131 +54,31 @@ public class MainActivity extends AppCompatActivity {
         clearButton = (Button) findViewById(R.id.clearButton);
 
         setUiEnabled(false);
-        registerBroadCastEvent();
-        requestConnectionPermission();
+
+        mBluetoothClient = new FakeBTClient(mHandler);
     }
 
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mBluetoothClient.disconnect();
+        mBluetoothClient.getBluetoothBroadcastReceiver().safeUnregister(this);
+        mBluetoothClient = null;
+    }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if(serialPort == null){
-            requestConnectionPermission();
-        }
-        registerBroadCastEvent();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        unregisterReceiver(broadcastReceiver);
-    }
-
-    private void registerBroadCastEvent(){
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(ACTION_USB_PERMISSION);
-        filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
-        filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
-//        below need API 23 +
-//        filter.addAction(BatteryManager.ACTION_CHARGING);
-//        filter.addAction(BatteryManager.ACTION_DISCHARGING);
-        filter.addAction(Intent.ACTION_BATTERY_LOW);
-        filter.addAction(Intent.ACTION_BATTERY_CHANGED);
-        registerReceiver(broadcastReceiver, filter);
-    }
-
-    UsbSerialInterface.UsbReadCallback mCallback = new UsbSerialInterface.UsbReadCallback() { //Defining a Callback which triggers whenever data is read.
-        @Override
-        public void onReceivedData(byte[] bytes) {
-            String data = null;
-            try {
-                data = new String(bytes, "ASCII");
-                data.concat("\n");
-                tvAppend(logText, data);
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
-        }
-    };
-
-    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() { //Broadcast Receiver to automatically start and stop the Serial connection.
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(ACTION_USB_PERMISSION)) {
-                boolean granted = intent.getExtras().getBoolean(UsbManager.EXTRA_PERMISSION_GRANTED);
-                if (granted) {
-                    connection = usbManager.openDevice(device);
-                    serialPort = UsbSerialDevice.createUsbSerialDevice(device, connection);
-                    if (serialPort != null) {
-                        if (serialPort.open()) { //Set Serial Connection Parameters.
-                            setUiEnabled(true);
-                            serialPort.setBaudRate(9600);
-                            serialPort.setDataBits(UsbSerialInterface.DATA_BITS_8);
-                            serialPort.setStopBits(UsbSerialInterface.STOP_BITS_1);
-                            serialPort.setParity(UsbSerialInterface.PARITY_NONE);
-                            serialPort.setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
-                            serialPort.read(mCallback);
-                            tvAppend(logText, "Serial Connection Opened!\n");
-                        } else {
-                            Log.d("SERIAL", "PORT NOT OPEN");
-                        }
-                    } else {
-                        Log.d("SERIAL", "PORT IS NULL");
-                    }
-                } else {
-                    Log.d("SERIAL", "PERM NOT GRANTED");
-                }
-            } else if (intent.getAction().equals(UsbManager.ACTION_USB_DEVICE_ATTACHED)) {
-                requestConnectionPermission();
-            } else if (intent.getAction().equals(UsbManager.ACTION_USB_DEVICE_DETACHED)) {
-                disconnect();
-            }else if(intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)){
-                int status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
-                int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
-                int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
-                float batteryPct = level / (float)scale;
-                if(batteryPct < 0.15 && status== BatteryManager.BATTERY_STATUS_DISCHARGING){
-                    sendCommand("LOW");
-                }
-                if(batteryPct > 0.95 && status== BatteryManager.BATTERY_STATUS_CHARGING){
-                    sendCommand("HIGH");
-                }
-            }
-        }
-    };
-
-
-    public void requestConnectionPermission() {
-        HashMap<String, UsbDevice> usbDevices = usbManager.getDeviceList();
-        if (!usbDevices.isEmpty()) {
-            boolean keep = true;
-            for (Map.Entry<String, UsbDevice> entry : usbDevices.entrySet()) {
-                device = entry.getValue();
-                int deviceVID = device.getVendorId();
-                if (deviceVID == 0x2341 || deviceVID == 0x10C4)//Arduino Vendor ID or CP2102
-                {
-                    PendingIntent pi = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
-                    usbManager.requestPermission(device, pi);
-                    keep = false;
-                } else {
-                    connection = null;
-                    device = null;
-                }
-
-                if (!keep)
-                    break;
-            }
+        if (mBluetoothClient != null && mBluetoothClient.getState() == BluetoothClient.STATE_NONE) {
+            mBluetoothClient.connect();
+            mBluetoothClient.getBluetoothBroadcastReceiver()
+                    .safeRegister(this, new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECTED));
         }
     }
 
-    public void disconnect() {
-        setUiEnabled(false);
-        if(serialPort != null) {
-            serialPort.close();
-        }
-        connection = null;
-        device = null;
-        tvAppend(logText,"\nSerial Connection Closed! \n");
+    public boolean isBtConnected() {
+        return mBluetoothClient != null && mBluetoothClient.getState() == BluetoothClientInterface.STATE_CONNECTED;
     }
 
     public void setUiEnabled(boolean bool) {
@@ -199,12 +100,13 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void sendCommand(String commandFormatter){
-        if(connection != null){
+    private void sendCommand(String commandFormatter) {
+        if (isBtConnected()) {
             //trim does the magic when door number is not specified for door/empty command.
             String command = String.format(commandFormatter, doorNumberText.getText()).trim();
-            serialPort.write(command.getBytes(Charset.forName("ASCII")));
-            tvAppend(logText, String.format("\nCommand: %s \n", command));
+            mBluetoothClient.sendCommand(command);
+//            serialPort.write(command.getBytes(Charset.forName("ASCII")));
+            tvAppend(logText, String.format("\nCommand sent: %s \n", command));
         }
     }
 
@@ -228,12 +130,12 @@ public class MainActivity extends AppCompatActivity {
         logText.setText("");
     }
 
-    public void onChargeClicked(View view){
+    public void onChargeClicked(View view) {
         Log.d("CHARGE", "LOW");
         sendCommand("LOW");
     }
 
-    public void onDischargeClicked(View view){
+    public void onDischargeClicked(View view) {
         Log.d("CHARGE", "HIGH");
         sendCommand("HIGH");
     }
