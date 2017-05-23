@@ -7,9 +7,11 @@ Build source with Android Studio.
 # How to use
 <img src="images/1.jpg" width="300px">
 1. Modify the MainActivity with correct target device name
+
 ```
-    public static final String TARGET_DEVICE_NAME = "Nexus 7";
+public static final String TARGET_DEVICE_NAME = "Nexus 7";
 ```
+
 2. Pair the Arduino board with android.
 3. The app will try to connect the board once running until it's connected. Watch the logs if the connection does not establish.
 
