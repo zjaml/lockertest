@@ -37,3 +37,6 @@ Input door number and press C-OUT button.
 ## Charging control
 * press CHARGE/DISCHARGE to simulate the LOW/HIGH command, making test easier.
 
+# Separation of BluetoothClient Library
+The BluetoothClient library is separated into an independent library in https://github.com/zjaml/BluetoothClient using https://jitpack.io.
+Needed to add the library to jitpack repo referencing https://jitpack.io/docs/BUILDING/#gradle-projects.
