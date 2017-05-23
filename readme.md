@@ -36,3 +36,4 @@ Input door number and press C-OUT button.
 
 ## Charging control
 * press CHARGE/DISCHARGE to simulate the LOW/HIGH command, making test easier.
+

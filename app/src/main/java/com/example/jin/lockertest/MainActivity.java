@@ -13,6 +13,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import kiny.io.bluetooth.BluetoothClient;
+import kiny.io.bluetooth.BluetoothClientInterface;
+import kiny.io.bluetooth.Constants;
+import kiny.io.bluetooth.FakeBTClient;
+
 
 public class MainActivity extends AppCompatActivity {
     //Make sure the device name is correct!
@@ -58,8 +63,8 @@ public class MainActivity extends AppCompatActivity {
         statusText = (TextView) findViewById(R.id.statusText);
 
         setUIConnected(false);
-
-        mBluetoothClient = new BluetoothClient(mHandler, TARGET_DEVICE_NAME);
+        mBluetoothClient = new FakeBTClient(mHandler);
+//        mBluetoothClient = new BluetoothClient(mHandler, TARGET_DEVICE_NAME);
     }
 
 
