@@ -13,10 +13,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import kiny.io.bluetooth.BluetoothClient;
-import kiny.io.bluetooth.BluetoothClientInterface;
-import kiny.io.bluetooth.Constants;
-import kiny.io.bluetooth.FakeBTClient;
+import io.kiny.bluetooth.BluetoothClient;
+import io.kiny.bluetooth.BluetoothClientInterface;
+import io.kiny.bluetooth.Constants;
+import io.kiny.bluetooth.FakeBTClient;
 
 
 public class MainActivity extends AppCompatActivity {
