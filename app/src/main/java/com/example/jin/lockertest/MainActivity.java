@@ -42,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case Constants.MESSAGE_INCOMING_MESSAGE:
                     String message = (String) msg.obj;
-                    tvAppend(logText, String.format("Message received: %s",  message.concat("\n")));
+                    tvAppend(logText, String.format("Message received: %s", message.concat("\n")));
                     break;
             }
         }
@@ -63,10 +63,9 @@ public class MainActivity extends AppCompatActivity {
         statusText = (TextView) findViewById(R.id.statusText);
 
         setUIConnected(false);
-        mBluetoothClient = new FakeBTClient(mHandler);
+        mBluetoothClient = new FakeBTClient(mHandler, false);
 //        mBluetoothClient = new BluetoothClient(mHandler, TARGET_DEVICE_NAME);
     }
-
 
     @Override
     protected void onDestroy() {
@@ -91,8 +90,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void setUIConnected(boolean connected) {
-        statusText.setText(connected?"Connected": "Disconnected");
-        statusText.setTextColor(connected? Color.rgb(72,145,116): Color.rgb(128,45,21));
+        statusText.setText(connected ? "Connected" : "Disconnected");
+        statusText.setTextColor(connected ? Color.rgb(72, 145, 116) : Color.rgb(128, 45, 21));
         checkInButton.setEnabled(connected);
         checkOutButton.setEnabled(connected);
         doorButton.setEnabled(connected);
